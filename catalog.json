@@ -1,0 +1,51 @@
+{
+  "policy": {
+    "minimumPeople": 8,
+    "discountPercent": 10,
+    "maximumPeople": 30
+  },
+  "trips": {
+    "shangarh": {
+      "title": "Shangarh",
+      "duration": "3 days · 2 nights",
+      "packages": {
+        "standard": {
+          "label": "Standard",
+          "pricePaise": 599900
+        },
+        "comfort": {
+          "label": "Comfort",
+          "pricePaise": 849900
+        }
+      }
+    },
+    "jibhi": {
+      "title": "Jibhi & Shoja",
+      "duration": "4 days · 3 nights",
+      "packages": {
+        "standard": {
+          "label": "Standard",
+          "pricePaise": 699900
+        },
+        "comfort": {
+          "label": "Comfort",
+          "pricePaise": 999900
+        }
+      }
+    },
+    "kashmir": {
+      "title": "Kashmir",
+      "duration": "6 days · 5 nights",
+      "packages": {
+        "standard": {
+          "label": "Standard",
+          "pricePaise": 1899900
+        },
+        "comfort": {
+          "label": "Comfort",
+          "pricePaise": 2699900
+        }
+      }
+    }
+  }
+}
