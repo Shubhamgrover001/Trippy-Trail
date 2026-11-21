@@ -1,0 +1,19 @@
+# Works on Netlify and Cloudflare Pages. Other hosts: set the same cache rules in the host settings.
+/assets/img/*
+  Cache-Control: public, max-age=31536000, immutable
+/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+/assets/icons/*
+  Cache-Control: public, max-age=604800
+/assets/css/*
+  Cache-Control: public, max-age=0, must-revalidate
+/assets/js/*
+  Cache-Control: public, max-age=0, must-revalidate
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+/privacy.html
+  Cache-Control: public, max-age=0, must-revalidate
+/sw.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Content-Type: application/manifest+json

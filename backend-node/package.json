@@ -1,0 +1,17 @@
+{
+  "name": "trippy-trail-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Trippy Trail API: departures, bookings, reviews, enquiries and admin (Express + SQLite)",
+  "main": "src/server.js",
+  "engines": { "node": ">=22.13.0" },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning src/server.js",
+    "seed": "node --disable-warning=ExperimentalWarning src/seed.js",
+    "create-admin": "node --disable-warning=ExperimentalWarning src/create-admin.js",
+    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

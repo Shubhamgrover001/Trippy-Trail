@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- LAUNCH TODO: replace YOUR-DOMAIN with the final domain, then submit in Google Search Console. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://YOUR-DOMAIN/</loc></url>
+  <url><loc>https://YOUR-DOMAIN/privacy.html</loc></url>
+</urlset>

@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# LAUNCH TODO: replace YOUR-DOMAIN with the final domain.
+Sitemap: https://YOUR-DOMAIN/sitemap.xml
