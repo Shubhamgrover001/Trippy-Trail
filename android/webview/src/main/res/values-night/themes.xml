@@ -1,8 +1,0 @@
-<resources>
-    <style name="Theme.TrippyTrail" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <item name="android:windowBackground">@color/forest</item>
-        <item name="android:statusBarColor">@color/forest</item>
-        <item name="android:navigationBarColor">@color/forest</item>
-        <item name="android:windowLightStatusBar">false</item>
-    </style>
-</resources>

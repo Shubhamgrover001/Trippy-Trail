@@ -1,8 +1,0 @@
-[{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "android_app",
-    "package_name": "com.trippytrail.twa",
-    "sha256_cert_fingerprints": ["REPLACE:WITH:YOUR:SIGNING:CERT:SHA256:FINGERPRINT"]
-  }
-}]
