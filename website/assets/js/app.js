@@ -779,6 +779,17 @@
   let draft = null;
   let demoReference = '';
   const methods = { upi: 'UPI', card: 'Debit / credit card', bank: 'Net banking' };
+  // Live mode (config.js: TRIPPY_API.enabled). Real departures, seats and a real seat hold from the Trippy Trail API.
+  const live = window.TrippyLive && window.TrippyLive.enabled ? window.TrippyLive : null;
+  let liveData = null;
+  let liveFailed = false;
+  const departureIdFor = (tripId, date) => liveData?.trips[tripId]?.departures.find(d => d.startDate === date)?.id;
+  const seatsLeftFor = (tripId, date) => liveData?.trips[tripId]?.departures.find(d => d.startDate === date)?.seatsLeft ?? 0;
+  function liveError(message) {
+    const box = $('#booking-live-error');
+    box.textContent = message || '';
+    box.hidden = !message;
+  }
 
   function renderDetails(key) {
     if (!Object.hasOwn(catalog, key)) return;
@@ -844,8 +855,17 @@
   }
   function fillDepartures(keep = '') {
     const select = $('#booking-date');
-    const list = departuresFor($('#booking-destination').value);
-    select.replaceChildren(new Option('Choose a departure', ''), ...list.map(v => new Option(new Intl.DateTimeFormat('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${v}T00:00:00Z`)), v)));
+    const tripId = $('#booking-destination').value;
+    const fmt = v => new Intl.DateTimeFormat('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${v}T00:00:00Z`));
+    if (live) {
+      const open = (liveData?.trips[tripId]?.departures || []).filter(d => d.seatsLeft > 0);
+      const list = open.map(d => d.startDate);
+      select.replaceChildren(new Option(liveFailed ? 'Booking unavailable right now' : liveData ? (open.length ? 'Choose a departure' : 'No departures open yet') : 'Loading departures…', ''), ...open.map(d => new Option(`${fmt(d.startDate)} · ${d.seatsLeft} seat${d.seatsLeft === 1 ? '' : 's'} left`, d.startDate)));
+      select.value = list.includes(keep) ? keep : '';
+      return;
+    }
+    const list = departuresFor(tripId);
+    select.replaceChildren(new Option('Choose a departure', ''), ...list.map(v => new Option(fmt(v), v)));
     select.value = list.includes(keep) ? keep : '';
   }
   function displayDate(value) {
@@ -917,6 +937,38 @@
     return { mode: 'demo', tripId: result.tripId, tripTitle: catalog[result.tripId].title, packageKey: result.packageKey, people: result.people, preferredArrival: $('#booking-date').value, leadName: $('#booking-name').value.trim(), quote: { ...result } };
   }
 
+  // Show the live wording and contact fields; swap demo copy for real copy.
+  function applyLiveCopy() {
+    if (!live) return;
+    $('#booking-contact-fields').hidden = false;
+    $('#booking-people').closest('.booking-travellers').querySelector('p').textContent = '1–30 travellers';
+    $('#booking-date-note').textContent = 'Only dates when this trip is running. Seats left are shown.';
+    $('#booking-details-form .booking-continue').firstChild.textContent = 'Continue ';
+    $('#booking-details-form .booking-bottom-note').textContent = 'Your seats are held for 30 minutes once you continue to payment.';
+    $('#download-booking-estimate').hidden = true;
+    $('#booking-edit-estimate').hidden = true;
+  }
+  async function prepareLive() {
+    if (!live) return;
+    liveError('');
+    const continueButton = $('#booking-details-form .booking-continue');
+    continueButton.disabled = true;
+    try {
+      liveData = await live.load(true);
+      liveFailed = false;
+      // The server's prices are the real ones; show them in the estimate too.
+      for (const [id, t] of Object.entries(liveData.trips)) {
+        if (catalog[id]) { catalog[id].packages.standard.pricePaise = t.standardPaise; catalog[id].packages.comfort.pricePaise = t.comfortPaise; }
+      }
+      continueButton.disabled = false;
+    } catch (error) {
+      liveFailed = true;
+      liveError(error.message);
+    }
+    fillDepartures($('#booking-date').value);
+    updateQuote();
+  }
+
   function openBooking(key = selectedTrip, trigger = document.activeElement) {
     if (!Object.hasOwn(catalog, key)) key = 'shangarh';
     bookingOpener = trigger;
@@ -927,6 +979,9 @@
     $('#booking-download-status').textContent = '';
     draft = null;
     demoReference = '';
+    liveBooking = null;
+    applyLiveCopy();
+    prepareLive();
     updateQuote();
     setStep('details', false);
     if (!dialog.open) dialog.showModal();
@@ -997,13 +1052,74 @@
     if (!event.currentTarget.reportValidity()) return;
     draft = getDraft();
     if (!draft) return;
+    if (live) {
+      liveError('');
+      const phone = $('#booking-phone').value.trim();
+      if (!/^\+?[0-9][0-9 \-]{6,18}$/.test(phone)) { liveError('Please enter a valid phone number so the team can reach you.'); $('#booking-phone').focus(); draft = null; return; }
+      if (draft.leadName.length < 2) { liveError('Please enter the lead traveller name.'); $('#booking-name').focus(); draft = null; return; }
+      const left = seatsLeftFor(draft.tripId, draft.preferredArrival);
+      if (draft.people > left) { liveError(left > 0 ? `Only ${left} seat${left === 1 ? '' : 's'} left on that date.` : 'That departure is full.'); draft = null; return; }
+      draft.phone = phone;
+      draft.email = $('#booking-email').value.trim();
+      $('#pay-badge').textContent = liveData?.payments?.enabled ? (liveData.payments.mode === 'test' ? 'TEST PAYMENT' : 'SECURE PAYMENT') : 'RESERVE YOUR SEATS';
+      $('#payment-step-title').textContent = liveData?.payments?.enabled ? 'Pay securely.' : 'Hold your seats.';
+      $('#pay-lead').textContent = liveData?.payments?.enabled ? `You pay ${money(draft.quote.totalPaise)} through Razorpay. UPI, cards and net banking are available in the payment window.` : `Online payment is not switched on yet. Your seats are held for 30 minutes and the team will contact you on ${phone} to confirm.`;
+      $('#pay-explainer').textContent = liveData?.payments?.mode === 'test' ? 'Test mode: no real money is charged. Use Razorpay test details only.' : 'The price is calculated again by our server when you continue.';
+      $('.payment-methods').hidden = true;
+      $('#pay-submit').firstChild.textContent = liveData?.payments?.enabled ? `Pay ${money(draft.quote.totalPaise)} ` : 'Hold my seats ';
+      $('#booking-pay-error').hidden = true;
+    }
     setStep('payment');
   });
-  $('#booking-back-details').addEventListener('click', () => setStep('details'));
+  $('#booking-back-details').addEventListener('click', () => { liveBooking = null; setStep('details'); });
   $('#booking-edit-estimate').addEventListener('click', () => { draft = null; setStep('details'); });
+  let liveBooking = null; // the held booking for this attempt, kept so a retry pays it instead of making a second hold
+  let liveBusy = false;
+  function showLiveReceipt(kind, note) {
+    const confirmed = kind === 'confirmed';
+    $('#receipt-badge').textContent = confirmed ? 'BOOKING CONFIRMED' : 'SEATS HELD';
+    $('#booking-receipt-title').innerHTML = confirmed ? 'You are going!' : 'Seats held.';
+    $('#receipt-lead').textContent = note;
+    $('#receipt-date-label').textContent = 'Departure';
+    $('#receipt-method-label').textContent = 'Total';
+    $('#receipt-reference-label').textContent = 'Booking reference';
+    $('#receipt-trip').textContent = `${draft.tripTitle} · ${catalog[draft.tripId].duration}`;
+    $('#receipt-date').textContent = displayDate(draft.preferredArrival);
+    $('#receipt-people').textContent = `${draft.people} traveller${draft.people === 1 ? '' : 's'} · ${catalog[draft.tripId].packages[draft.packageKey].label}`;
+    $('#receipt-method').textContent = money(liveBooking.quote.totalPaise);
+    $('#receipt-reference').textContent = liveBooking.reference;
+    setStep('receipt');
+  }
+  async function submitLive() {
+    if (liveBusy) return;
+    liveBusy = true;
+    const button = $('#pay-submit');
+    const error = $('#booking-pay-error');
+    error.hidden = true;
+    button.disabled = true;
+    try {
+      if (!liveBooking) {
+        const departureId = departureIdFor(draft.tripId, draft.preferredArrival);
+        if (!departureId) throw new Error('That departure is no longer available. Please go back and choose another date.');
+        liveBooking = await live.book({ departureId, package: draft.packageKey, travellers: draft.people, name: draft.leadName, phone: draft.phone, email: draft.email || undefined });
+      }
+      if (!liveData?.payments?.enabled) { showLiveReceipt('held', 'Your seats are held for 30 minutes. The team will contact you to confirm and arrange payment. Please keep this reference.'); return; }
+      const result = await live.pay(liveBooking.reference, { description: `${draft.tripTitle} · ${draft.people} traveller${draft.people === 1 ? '' : 's'}`, name: draft.leadName, phone: draft.phone, email: draft.email });
+      if (result.cancelled) { error.textContent = 'Payment was not completed. Your seats stay held until the timer ends; you can try again.'; error.hidden = false; return; }
+      showLiveReceipt(result.status === 'confirmed' && !result.needsReview ? 'confirmed' : 'held', result.note);
+    } catch (e) {
+      if (e.status === 409 || e.status === 404) liveBooking = null; // hold gone or full: a new attempt must start from the details step
+      error.textContent = e.message;
+      error.hidden = false;
+    } finally {
+      liveBusy = false;
+      button.disabled = false;
+    }
+  }
   $('#booking-payment-form').addEventListener('submit', event => {
     event.preventDefault();
     if (!draft) { setStep('details'); return; }
+    if (live) { submitLive(); return; }
     const method = $('input[name="payment-method"]:checked', dialog)?.value;
     if (!Object.hasOwn(methods, method)) return;
     draft.method = method;

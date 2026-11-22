@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Trippy Trail Admin</title>
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<main id="login" class="card narrow" hidden>
+  <h1>Trippy Trail Admin</h1>
+  <form id="loginForm" autocomplete="on">
+    <label>Email <input name="email" type="email" autocomplete="username" required></label>
+    <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+    <button type="submit">Sign in</button>
+    <p id="loginError" class="error" role="alert"></p>
+  </form>
+</main>
+
+<div id="app" hidden>
+  <header>
+    <strong>Trippy Trail Admin</strong>
+    <span id="mode" class="pill"></span>
+    <span class="grow"></span>
+    <span id="who"></span>
+    <button id="logout" class="ghost">Sign out</button>
+  </header>
+  <section id="summary" class="cards"></section>
+  <nav id="tabs" role="tablist"></nav>
+  <p id="msg" role="status"></p>
+  <section id="view"></section>
+</div>
+<script src="admin.js"></script>
+</body>
+</html>

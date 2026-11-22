@@ -7,3 +7,6 @@ window.TRIPPY_DEPARTURES = { shangarh: [], jibhi: [], kashmir: [] };
    whatsapp: country code + number, digits only, e.g. "919876543210" (no +, spaces or dashes).
    phone: same format; a leading + is allowed. Leave both empty to keep every button hidden. */
 window.TRIPPY_CONTACT = { whatsapp: "918920933972", phone: "+918920933972", email: "Trippytrail.in@gmail.com" };
+/* Live booking. Off = the site stays a demo. Turn on (enabled: true) only when the API is running and the owner inputs are in.
+   base: leave "" when the website is served by the Trippy Trail server itself (same address); otherwise the API address, e.g. "https://api.example.com". */
+window.TRIPPY_API = { enabled: false, base: "" };

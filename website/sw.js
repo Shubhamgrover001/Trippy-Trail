@@ -1,5 +1,5 @@
 /* Trippy Trail service worker: offline-first for the site shell and assets. Bump CACHE on every release. */
-const CACHE = 'trippy-trail-v2';
+const CACHE = 'trippy-trail-v3';
 const PRECACHE = [
  "./assets/css/privacy.css",
  "./assets/css/site.css",
@@ -25,6 +25,7 @@ const PRECACHE = [
  "./assets/img/shangarh-village-sunset.webp",
  "./assets/js/app.js",
  "./assets/js/config.js",
+ "./assets/js/live.js",
  "./assets/js/pdf-libs.js",
  "./assets/js/privacy.js",
  "./",
@@ -36,7 +37,9 @@ self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c =>
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(n => n !== CACHE).map(n => caches.delete(n)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
   const req = e.request;
-  if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
+  const url = new URL(req.url);
+  if (req.method !== 'GET' || url.origin !== location.origin) return;
+  if (/^\/(api|admin)(\/|$)/.test(url.pathname)) return; // live seats, prices and the admin page are never cached
   if (req.mode === 'navigate') {
     e.respondWith(fetch(req).then(r => { const c = r.clone(); caches.open(CACHE).then(x => x.put(req, c)); return r; }).catch(() => caches.match(req).then(hit => hit || caches.match(req, { ignoreSearch: true })).then(hit => hit || caches.match('./index.html'))));
     return;

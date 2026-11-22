@@ -21,7 +21,13 @@ const app = createApp(db, {
   production,
   trustProxy: process.env.TRUST_PROXY === '1',
   siteDir: path.resolve(root, process.env.SITE_DIR || './public'),
+  razorpay: {
+    keyId: process.env.RAZORPAY_KEY_ID || '',
+    keySecret: process.env.RAZORPAY_KEY_SECRET || '',
+    webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || '',
+  },
 });
+if (production && /^rzp_test_/.test(process.env.RAZORPAY_KEY_ID || '')) console.warn('[payments] Razorpay TEST keys are active in production.');
 
 setInterval(() => { try { app.releaseExpired(); } catch (e) { console.error('[hold-release]', e); } }, 60 * 1000).unref();
 

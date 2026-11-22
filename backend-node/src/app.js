@@ -7,6 +7,7 @@ const { transaction } = require('./db');
 const { quote, MAX_TRAVELLERS } = require('./pricing');
 const auth = require('./auth');
 const v = require('./validate');
+const { createRazorpay } = require('./razorpay');
 
 const COOKIE = 'tt_admin';
 const SESSION_MS = 8 * 60 * 60 * 1000;
@@ -38,6 +39,8 @@ function createApp(db, cfg) {
   const loginLimit = auth.rateLimiter({ name: 'login', ...limits.login });
   const writeLimit = auth.rateLimiter({ name: 'write', ...limits.write });
   const readLimit = auth.rateLimiter({ name: 'read', ...limits.read });
+  const payLimit = auth.rateLimiter({ name: 'pay', ...(limits.pay || { max: 30, windowMs: 60 * 60 * 1000 }) });
+  const rzp = createRazorpay(cfg.razorpay || {});
 
   // ---- shared helpers -------------------------------------------------
   const nowISO = () => new Date().toISOString();
@@ -65,7 +68,8 @@ function createApp(db, cfg) {
     });
     next();
   });
-  app.use('/api', express.json({ limit: '20kb' }));
+  // rawBody is kept so webhook signatures can be checked against the exact bytes Razorpay sent.
+  app.use('/api', express.json({ limit: '20kb', verify: (req, res, buf) => { req.rawBody = buf; } }));
 
   // ---- public API ------------------------------------------------------
   app.get('/api/health', (req, res) => res.json({ ok: true }));
@@ -114,6 +118,82 @@ function createApp(db, cfg) {
       return { reference, holdExpiresAt, departure: { id: dep.id, startDate: dep.start_date }, quote: q };
     });
     res.status(201).json({ ...result, status: 'pending', note: 'Seats are held for 30 minutes. The team confirms the booking after payment.' });
+  });
+
+  // ---- payments (Razorpay; test mode until live keys are added) ----------
+  const refParam = (req) => v.text(req.params.reference, 'Reference', { min: 5, max: 20 });
+
+  /**
+   * Mark a booking paid. Safe to call twice (checkout callback + webhook): the second call changes nothing.
+   * If the hold already expired, the payment id is still stored and seats are re-taken only if they are free.
+   */
+  function markPaid(orderId, paymentId) {
+    return transaction(db, () => {
+      const b = db.prepare('SELECT id, status, departure_id, travellers, razorpay_payment_id FROM bookings WHERE razorpay_order_id = ?').get(orderId);
+      if (!b) throw httpError(404, 'Booking not found for this payment.');
+      if (b.status === 'confirmed') return { status: 'confirmed', already: true };
+      if (b.status === 'cancelled') {
+        db.prepare('UPDATE bookings SET razorpay_payment_id = ?, updated_at = ? WHERE id = ?').run(paymentId, nowISO(), b.id);
+        return { status: 'cancelled', needsReview: true };
+      }
+      if (b.status === 'expired') {
+        const dep = db.prepare('SELECT capacity, booked, status FROM departures WHERE id = ?').get(b.departure_id);
+        if (dep.status !== 'open' || dep.capacity - dep.booked < b.travellers) {
+          db.prepare('UPDATE bookings SET razorpay_payment_id = ?, updated_at = ? WHERE id = ?').run(paymentId, nowISO(), b.id);
+          return { status: 'expired', needsReview: true };
+        }
+        db.prepare('UPDATE departures SET booked = booked + ? WHERE id = ?').run(b.travellers, b.departure_id);
+      }
+      db.prepare("UPDATE bookings SET status = 'confirmed', hold_expires_at = NULL, razorpay_payment_id = ?, updated_at = ? WHERE id = ?").run(paymentId, nowISO(), b.id);
+      return { status: 'confirmed' };
+    });
+  }
+
+  app.get('/api/payments/config', readLimit, (req, res) => {
+    res.json({ enabled: rzp.enabled, mode: rzp.mode, keyId: rzp.keyId });
+  });
+
+  app.post('/api/bookings/:reference/pay', payLimit, async (req, res) => {
+    if (!rzp.enabled) throw httpError(503, 'Online payment is not switched on yet. The team will confirm your booking.');
+    const reference = refParam(req);
+    releaseExpired();
+    const b = db.prepare('SELECT id, reference, status, total_paise, razorpay_order_id, hold_expires_at FROM bookings WHERE reference = ?').get(reference);
+    if (!b) throw httpError(404, 'Booking not found.');
+    if (b.status !== 'pending') throw httpError(409, b.status === 'expired' ? 'This seat hold has expired. Please book again.' : `This booking is already ${b.status}.`);
+    if (b.razorpay_order_id) return res.json({ orderId: b.razorpay_order_id, amountPaise: b.total_paise, currency: 'INR', keyId: rzp.keyId, mode: rzp.mode, reference: b.reference });
+    const order = await rzp.createOrder({ amountPaise: b.total_paise, receipt: b.reference, notes: { reference: b.reference } });
+    const saved = db.prepare("UPDATE bookings SET razorpay_order_id = ?, updated_at = ? WHERE id = ? AND razorpay_order_id IS NULL AND status = 'pending'").run(order.id, nowISO(), b.id);
+    if (!saved.changes) { // another request created an order first (or the hold just ended): use whatever is stored
+      const again = db.prepare('SELECT razorpay_order_id AS orderId, status FROM bookings WHERE id = ?').get(b.id);
+      if (again.status !== 'pending' || !again.orderId) throw httpError(409, 'This booking can no longer be paid. Please book again.');
+      return res.json({ orderId: again.orderId, amountPaise: b.total_paise, currency: 'INR', keyId: rzp.keyId, mode: rzp.mode, reference: b.reference });
+    }
+    res.status(201).json({ orderId: order.id, amountPaise: b.total_paise, currency: 'INR', keyId: rzp.keyId, mode: rzp.mode, reference: b.reference });
+  });
+
+  app.post('/api/payments/verify', payLimit, (req, res) => {
+    if (!rzp.enabled) throw httpError(503, 'Online payment is not switched on yet.');
+    const b = req.body ?? {};
+    const orderId = v.text(b.razorpay_order_id, 'Order', { max: 60 });
+    const paymentId = v.text(b.razorpay_payment_id, 'Payment', { max: 60 });
+    const signature = v.text(b.razorpay_signature, 'Signature', { max: 200 });
+    if (!rzp.verifyCheckout({ orderId, paymentId, signature })) throw httpError(400, 'Payment could not be verified.');
+    const r = markPaid(orderId, paymentId);
+    const note = r.needsReview
+      ? 'Payment received, but the seats could not be held. The team will contact you shortly.'
+      : 'Payment received. Your booking is confirmed.';
+    res.json({ ...r, note });
+  });
+
+  app.post('/api/webhooks/razorpay', (req, res) => {
+    if (!rzp.hasWebhook) throw httpError(503, 'Webhook is not configured.');
+    if (!rzp.verifyWebhook(req.rawBody, req.get('x-razorpay-signature'))) throw httpError(400, 'Bad signature.');
+    const ev = req.body ?? {};
+    const pay = ev.payload?.payment?.entity;
+    if ((ev.event === 'payment.captured' || ev.event === 'order.paid') && pay?.order_id && pay?.id) {
+      try { markPaid(String(pay.order_id), String(pay.id)); } catch (e) { if (e.status !== 404) throw e; }
+    }
+    res.json({ received: true });
   });
 
   app.get('/api/reviews', readLimit, (req, res) => {
@@ -253,6 +333,7 @@ function createApp(db, cfg) {
     const sql = `SELECT b.id, b.reference, b.package, b.travellers, b.name, b.phone, b.email, b.offer_code AS offerCode,
       b.subtotal_paise AS subtotalPaise, b.group_discount_paise AS groupDiscountPaise, b.offer_discount_paise AS offerDiscountPaise,
       b.total_paise AS totalPaise, b.status, b.hold_expires_at AS holdExpiresAt, b.created_at AS createdAt,
+      b.razorpay_payment_id AS paymentId,
       d.start_date AS startDate, t.title AS tripTitle
       FROM bookings b JOIN departures d ON d.id = b.departure_id JOIN trips t ON t.id = d.trip_id
       ${status ? 'WHERE b.status = ?' : ''} ORDER BY b.id DESC LIMIT 300`;
@@ -325,7 +406,7 @@ function createApp(db, cfg) {
     if (sqlite.includes('UNIQUE') && sqlite.includes('departures')) return res.status(409).json({ error: 'A departure on that date already exists for this trip.' });
     if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'Request body is not valid JSON.' });
     if (err.type === 'entity.too.large') return res.status(413).json({ error: 'Request is too large.' });
-    const status = Number.isInteger(err.status) && err.status >= 400 && err.status < 500 ? err.status : 500;
+    const status = Number.isInteger(err.status) && err.status >= 400 && err.status < 600 ? err.status : 500;
     if (status === 500) console.error('[error]', err);
     res.status(status).json({ error: status === 500 ? 'Something went wrong. Please try again.' : err.message });
   });
