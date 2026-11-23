@@ -246,10 +246,15 @@ function createApp(db, cfg) {
     res.json({ email: row.email, csrfToken: auth.csrfFor(token, secret) });
   });
 
+  // Logout must really end the session: signed tokens are remembered as revoked until they would have expired anyway.
+  db.exec('CREATE TABLE IF NOT EXISTS revoked_sessions (sig TEXT PRIMARY KEY, exp INTEGER NOT NULL)');
+  const sigOf = (token) => crypto.createHash('sha256').update(String(token)).digest('hex');
+
   function requireAdmin(req, res, next) {
     const token = auth.parseCookies(req.headers.cookie)[COOKIE];
     const p = auth.verifyToken(token, secret);
-    const admin = p && db.prepare('SELECT id, email FROM admins WHERE id = ?').get(p.aid);
+    const revoked = p && db.prepare('SELECT 1 FROM revoked_sessions WHERE sig = ?').get(sigOf(token));
+    const admin = p && !revoked && db.prepare('SELECT id, email FROM admins WHERE id = ?').get(p.aid);
     if (!admin) return res.status(401).json({ error: 'Please sign in.' });
     req.admin = admin;
     req.csrf = auth.csrfFor(token, secret);
@@ -263,6 +268,10 @@ function createApp(db, cfg) {
 
   app.get('/api/admin/me', requireAdmin, (req, res) => res.json({ email: req.admin.email, csrfToken: req.csrf }));
   app.post('/api/admin/logout', requireAdmin, (req, res) => {
+    const token = auth.parseCookies(req.headers.cookie)[COOKIE];
+    const p = auth.verifyToken(token, secret);
+    db.prepare('DELETE FROM revoked_sessions WHERE exp < ?').run(Date.now());
+    db.prepare('INSERT OR IGNORE INTO revoked_sessions (sig, exp) VALUES (?, ?)').run(sigOf(token), p.exp);
     res.set('Set-Cookie', `${COOKIE}=; Max-Age=0; ${cookieFlags}`);
     res.json({ ok: true });
   });

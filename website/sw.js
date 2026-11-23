@@ -40,6 +40,10 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== location.origin) return;
   if (/^\/(api|admin)(\/|$)/.test(url.pathname)) return; // live seats, prices and the admin page are never cached
+  if (url.pathname.endsWith('/assets/js/config.js')) { // the live-mode switch must reach returning visitors: network first, cache only when offline
+    e.respondWith(fetch(req).then(r => { if (r.ok) { const c = r.clone(); caches.open(CACHE).then(x => x.put(req, c)); } return r; }).catch(() => caches.match(req)));
+    return;
+  }
   if (req.mode === 'navigate') {
     e.respondWith(fetch(req).then(r => { const c = r.clone(); caches.open(CACHE).then(x => x.put(req, c)); return r; }).catch(() => caches.match(req).then(hit => hit || caches.match(req, { ignoreSearch: true })).then(hit => hit || caches.match('./index.html'))));
     return;
