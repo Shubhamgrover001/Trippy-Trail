@@ -9,6 +9,7 @@
     "start": "node --disable-warning=ExperimentalWarning src/server.js",
     "seed": "node --disable-warning=ExperimentalWarning src/seed.js",
     "create-admin": "node --disable-warning=ExperimentalWarning src/create-admin.js",
+    "preflight": "node --disable-warning=ExperimentalWarning src/preflight.js",
     "test": "node --disable-warning=ExperimentalWarning --test test/*.test.js"
   },
   "dependencies": {

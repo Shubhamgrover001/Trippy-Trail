@@ -1,0 +1,6 @@
+node_modules
+.env
+*.db
+android
+__pycache__
+.git

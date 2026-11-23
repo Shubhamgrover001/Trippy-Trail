@@ -416,6 +416,14 @@ function createApp(db, cfg) {
   }
   if (cfg.siteDir && fs.existsSync(cfg.siteDir)) {
     app.use(express.static(cfg.siteDir, { extensions: ['html'], setHeaders: (res, file) => {
+      // Baseline headers for every public file. No CSP here: the public pages use inline scripts and Razorpay Checkout.
+      res.set({
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'SAMEORIGIN',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(self)',
+      });
+      if (cfg.production) res.set('Strict-Transport-Security', 'max-age=15552000');
       if (/sw\.js$|index\.html$/.test(file)) res.set('Cache-Control', 'no-cache');
     } }));
   }
