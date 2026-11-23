@@ -81,6 +81,9 @@ function openDatabase(file) {
   const db = new DatabaseSync(file);
   db.exec('PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;');
   db.exec(SCHEMA);
+  // Older databases: link a review to the booking it came from (set only after the booking is checked).
+  if (!db.prepare('PRAGMA table_info(reviews)').all().some((c) => c.name === 'booking_id')) db.exec('ALTER TABLE reviews ADD COLUMN booking_id INTEGER REFERENCES bookings(id)');
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_reviews_booking ON reviews(booking_id) WHERE booking_id IS NOT NULL');
   return db;
 }
 

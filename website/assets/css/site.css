@@ -2064,3 +2064,8 @@ html[data-theme="dark"] .booking-field-error{color:#ff9f7e}
 .footer-policies button{font-size:12px;font-weight:600;min-height:32px;text-decoration:underline;text-underline-offset:3px;color:var(--forest);cursor:pointer}
 @media(max-width:900px){.faq-section{grid-template-columns:minmax(0,1fr);gap:24px;padding-block:50px 30px}.faq-intro{position:static}.faq-list details>div{padding-right:8px}}
 @media(max-width:700px){.policy-body{padding:30px 22px 28px}.faq-policies{padding:20px 18px}.faq-list summary{font-size:15px}}
+/* Support contact: keep each phone/email whole and line them up instead of breaking mid-number */
+#footer-support{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;min-width:0}
+#footer-support a{white-space:nowrap;max-width:100%}
+#footer-support a[href^="mailto:"]{white-space:normal;overflow-wrap:anywhere}
+.footer-policies button{padding-inline:0;text-align:left}

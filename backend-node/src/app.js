@@ -199,9 +199,9 @@ function createApp(db, cfg) {
   app.get('/api/reviews', readLimit, (req, res) => {
     const trip = typeof req.query.trip === 'string' ? req.query.trip : '';
     const rows = trip
-      ? db.prepare("SELECT id, trip_id, name, rating, title, body, created_at FROM reviews WHERE status = 'approved' AND trip_id = ? ORDER BY id DESC LIMIT 100").all(trip)
-      : db.prepare("SELECT id, trip_id, name, rating, title, body, created_at FROM reviews WHERE status = 'approved' ORDER BY id DESC LIMIT 100").all();
-    res.json({ reviews: rows.map((r) => ({ id: r.id, tripId: r.trip_id, name: r.name, rating: r.rating, title: r.title, body: r.body, createdAt: r.created_at })) });
+      ? db.prepare("SELECT id, trip_id, name, rating, title, body, created_at, booking_id IS NOT NULL AS verified FROM reviews WHERE status = 'approved' AND trip_id = ? ORDER BY id DESC LIMIT 100").all(trip)
+      : db.prepare("SELECT id, trip_id, name, rating, title, body, created_at, booking_id IS NOT NULL AS verified FROM reviews WHERE status = 'approved' ORDER BY id DESC LIMIT 100").all();
+    res.json({ reviews: rows.map((r) => ({ id: r.id, tripId: r.trip_id, name: r.name, rating: r.rating, title: r.title, body: r.body, createdAt: r.created_at, verified: !!r.verified })) });
   });
 
   app.post('/api/reviews', writeLimit, (req, res) => {
@@ -214,8 +214,21 @@ function createApp(db, cfg) {
       title: v.text(b.title, 'Title', { min: 3, max: 80 }),
       body: v.text(b.body, 'Review', { min: 10, max: 600, multiline: true }),
     };
-    db.prepare("INSERT INTO reviews (trip_id, name, rating, title, body, status) VALUES (?,?,?,?,?, 'pending')").run(tripId, review.name, review.rating, review.title, review.body);
-    res.status(201).json({ status: 'pending', note: 'Thanks. Your review appears after the team approves it.' });
+    // "Verified traveller" means: a confirmed booking for this trip, whose departure date has passed, matched by reference AND phone.
+    let bookingId = null;
+    if (b.bookingReference !== undefined && b.bookingReference !== null && b.bookingReference !== '') {
+      const reference = v.text(b.bookingReference, 'Booking reference', { min: 5, max: 20 }).toUpperCase();
+      const digits = (x) => String(x).replace(/\D/g, '').slice(-10);
+      const row = db.prepare(`SELECT b.id, b.phone, b.status, d.trip_id, d.start_date FROM bookings b JOIN departures d ON d.id = b.departure_id WHERE b.reference = ?`).get(reference);
+      const same = row && digits(row.phone).length >= 7 && digits(row.phone) === digits(v.phone(b.phone));
+      const refused = () => { throw new v.ValidationError('We could not match that booking. Check the reference and phone number you booked with.'); };
+      if (!same || row.status !== 'confirmed' || row.trip_id !== tripId) refused();
+      if (row.start_date >= todayISO()) throw new v.ValidationError('You can review a trip after it has taken place.');
+      if (db.prepare('SELECT 1 FROM reviews WHERE booking_id = ?').get(row.id)) throw new v.ValidationError('A review has already been added for this booking.');
+      bookingId = row.id;
+    }
+    db.prepare("INSERT INTO reviews (trip_id, name, rating, title, body, status, booking_id) VALUES (?,?,?,?,?, 'pending', ?)").run(tripId, review.name, review.rating, review.title, review.body, bookingId);
+    res.status(201).json({ status: 'pending', verified: bookingId !== null, note: 'Thanks. Your review appears after the team approves it.' });
   });
 
   app.post('/api/enquiries', writeLimit, (req, res) => {
@@ -365,7 +378,7 @@ function createApp(db, cfg) {
 
   admin.get('/reviews', (req, res) => {
     const status = ['pending', 'approved', 'rejected'].includes(req.query.status) ? req.query.status : 'pending';
-    res.json({ reviews: db.prepare(`SELECT r.id, r.trip_id AS tripId, t.title AS tripTitle, r.name, r.rating, r.title, r.body, r.status, r.created_at AS createdAt
+    res.json({ reviews: db.prepare(`SELECT r.id, r.trip_id AS tripId, t.title AS tripTitle, r.name, r.rating, r.title, r.body, r.status, r.created_at AS createdAt, r.booking_id IS NOT NULL AS verified
       FROM reviews r JOIN trips t ON t.id = r.trip_id WHERE r.status = ? ORDER BY r.id DESC LIMIT 300`).all(status) });
   });
   admin.patch('/reviews/:id', (req, res) => {

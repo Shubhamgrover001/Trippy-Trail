@@ -134,7 +134,7 @@
     const set = (r, status) => act(() => api('/admin/reviews/' + r.id, { method: 'PATCH', body: { status } }));
     const rows = reviews.map((r) => h('tr', {},
       h('td', {}, r.tripTitle, h('br'), h('span', { class: 'muted' }, when(r.createdAt))),
-      h('td', {}, r.name, h('br'), '★'.repeat(r.rating)),
+      h('td', {}, r.name, h('br'), '★'.repeat(r.rating), h('br'), r.verified ? h('span', { class: 'pill approved' }, 'Verified traveller') : h('span', { class: 'muted' }, 'Not linked to a booking')),
       h('td', { class: 'wrap' }, h('b', {}, r.title), h('br'), r.body),
       h('td', { class: 'actions' },
         r.status !== 'approved' ? h('button', { class: 'small', onclick: () => set(r, 'approved') }, 'Approve') : '',
