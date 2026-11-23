@@ -1,5 +1,5 @@
 /* Trippy Trail service worker: offline-first for the site shell and assets. Bump CACHE on every release. */
-const CACHE = 'trippy-trail-v3';
+const CACHE = 'trippy-trail-v4';
 const PRECACHE = [
  "./assets/css/privacy.css",
  "./assets/css/site.css",
@@ -26,6 +26,7 @@ const PRECACHE = [
  "./assets/js/app.js",
  "./assets/js/config.js",
  "./assets/js/live.js",
+ "./assets/js/trust.js",
  "./assets/js/pdf-libs.js",
  "./assets/js/privacy.js",
  "./",

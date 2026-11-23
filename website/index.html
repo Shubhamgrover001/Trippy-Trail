@@ -463,6 +463,17 @@
       <noscript><p class="gallery-noscript">Turn on JavaScript to browse the gallery or add your photos. Destination imagery is also available in the trip cards above.</p></noscript>
     </section>
 
+    <section class="how-section container section-space" id="how-booking-works" aria-labelledby="how-title">
+      <div class="section-heading"><div><p class="eyebrow">How booking works</p><h2 id="how-title">Four steps.<br><em>No surprises.</em></h2></div>
+        <div class="section-intro"><p>Here is exactly what happens from choosing a trip to getting your booking reference.</p><span class="micro-note tt-demo-only">Demo preview · this site does not take real bookings yet</span></div></div>
+      <ol class="how-steps">
+        <li><span aria-hidden="true">1</span><h3>Choose</h3><p>Pick a trip, a departure date and how many travellers.</p></li>
+        <li><span aria-hidden="true">2</span><h3>Hold your seats</h3><p>Your seats are held for 30 minutes while you pay.</p></li>
+        <li><span aria-hidden="true">3</span><h3>Pay online</h3><p>Pay through Razorpay. The price is worked out by our server, so what you see is what you pay.</p></li>
+        <li><span aria-hidden="true">4</span><h3>Get your reference</h3><p>Once the payment is verified your booking is confirmed and you get a booking reference.</p></li>
+      </ol>
+    </section>
+
     <section class="reviews-section container section-space" id="reviews" aria-labelledby="reviews-title">
       <div class="section-heading reviews-heading">
         <div><p class="eyebrow">04 / Stories from the trail</p><h2 id="reviews-title">Good trails.<br><em>Great stories.</em></h2></div>
@@ -508,6 +519,31 @@
         <p class="collaboration-note">Opens the collaboration application in Google Forms.<br>Applications are reviewed by the Trippy Trail team.</p>
       </div>
       <div class="collaboration-visual" aria-hidden="true"><span class="collaboration-sticker"><svg class="icon"><use href="#icon-image"/></svg>Let's create<br>something good.</span><div class="collaboration-art-caption"><span>GOOD PLACES. FRESH PERSPECTIVES.</span><strong>Made for<br>the story makers.</strong></div></div>
+    </section>
+
+    <section class="live-reviews container section-space" id="live-reviews" aria-labelledby="live-reviews-title" hidden>
+      <div class="section-heading"><div><p class="eyebrow">Traveller reviews</p><h2 id="live-reviews-title">Real travellers.<br><em>Real words.</em></h2></div>
+        <div class="section-intro"><p>Every review here was approved by the team. A “Verified traveller” badge means the review matches a confirmed, completed booking.</p></div></div>
+      <div class="live-review-list" id="live-review-list" aria-live="polite"></div>
+      <p class="live-review-empty" id="live-review-empty" hidden>No reviews yet. Travellers can add one after their trip.</p>
+      <details class="live-review-form-wrap">
+        <summary>Travelled with us? Add a review</summary>
+        <form id="live-review-form" novalidate>
+          <div class="lr-grid">
+            <label>Your name<input name="name" type="text" minlength="2" maxlength="60" required autocomplete="given-name"></label>
+            <label>Trip<select name="tripId" required><option value="shangarh">Shangarh</option><option value="jibhi">Jibhi &amp; Shoja</option><option value="kashmir">Kashmir</option></select></label>
+            <label>Rating<select name="rating" required><option value="5">5 stars</option><option value="4">4 stars</option><option value="3">3 stars</option><option value="2">2 stars</option><option value="1">1 star</option></select></label>
+            <label>Title<input name="title" type="text" minlength="3" maxlength="80" required></label>
+          </div>
+          <label>Your review<textarea name="body" rows="4" minlength="10" maxlength="600" required></textarea></label>
+          <fieldset class="lr-verify"><legend>Get the Verified traveller badge (optional)</legend>
+            <p>Enter the booking reference from your receipt and the phone number you booked with. Both must match a confirmed booking whose trip has taken place.</p>
+            <div class="lr-grid"><label>Booking reference<input name="bookingReference" type="text" maxlength="20" autocomplete="off"></label><label>Phone number<input name="phone" type="tel" maxlength="20" autocomplete="tel"></label></div>
+          </fieldset>
+          <p class="lr-note" id="live-review-note" role="status" aria-live="polite"></p>
+          <button class="button button-orange" type="submit" id="live-review-submit">Send my review</button>
+        </form>
+      </details>
     </section>
 
     <section class="faq-section container" id="faq" aria-labelledby="faq-title">
@@ -583,6 +619,7 @@
         <div class="booking-step-heading"><span class="booking-small-badge" id="pay-badge">SIMULATION ONLY</span><h3 tabindex="-1" id="payment-step-title">Try the checkout.</h3><p id="pay-lead">This previews a payment journey. A live payment gateway has not been connected.</p></div>
         <fieldset class="payment-methods"><legend>Choose a payment method to preview</legend><label><input type="radio" name="payment-method" value="upi" checked><span class="payment-method-icon" aria-hidden="true">↗</span><span><strong>UPI</strong><small>Preview an app-based payment</small></span><b>UPI</b></label><label><input type="radio" name="payment-method" value="card"><span class="payment-method-icon" aria-hidden="true">▤</span><span><strong>Debit / credit card</strong><small>Preview a card payment</small></span><b>CARD</b></label><label><input type="radio" name="payment-method" value="bank"><span class="payment-method-icon" aria-hidden="true">⌂</span><span><strong>Net banking</strong><small>Preview a bank payment</small></span><b>BANK</b></label></fieldset>
         <p class="payment-demo-explainer" id="pay-explainer">No card number, UPI ID or bank details are needed. This step cannot charge you or reserve a place.</p>
+        <p class="secure-note" id="pay-secure-note" hidden>Payments are handled by Razorpay. Trippy Trail never sees or stores your card, UPI or bank details.</p>
         <p class="booking-field-error" id="booking-pay-error" role="alert" hidden></p>
         <button class="button button-orange booking-continue" id="pay-submit" type="submit">Simulate payment <svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></button>
         <button class="booking-back" type="button" id="booking-back-details">← Back to trip details</button>
@@ -590,6 +627,7 @@
       <div class="booking-step" data-booking-step="receipt" hidden>
         <div class="booking-estimate-icon" aria-hidden="true">✓</div><div class="booking-step-heading"><span class="booking-small-badge" id="receipt-badge">DEMO COMPLETE</span><h3 id="booking-receipt-title" tabindex="-1">Your next trip,<br>on paper.</h3><p id="receipt-lead"><strong>No charge. No reservation.</strong><br>Your sample estimate is ready to keep and discuss with the team.</p></div>
         <dl class="booking-receipt-details"><div><dt>Trip</dt><dd id="receipt-trip"></dd></div><div><dt id="receipt-date-label">Preferred arrival</dt><dd id="receipt-date"></dd></div><div><dt>Travellers &amp; stay</dt><dd id="receipt-people"></dd></div><div><dt id="receipt-method-label">Simulated method</dt><dd id="receipt-method"></dd></div><div><dt id="receipt-reference-label">Demo reference</dt><dd id="receipt-reference"></dd></div></dl>
+        <p class="receipt-next tt-live-only" id="receipt-next" hidden><b>What happens next.</b> Keep your booking reference safe. You will need it if you contact the team, and to add a verified review after your trip. If your seats are only held, pay within 30 minutes or the hold expires.</p>
         <button class="button button-dark booking-continue" type="button" id="download-booking-estimate"><span>Download my estimate (PDF)</span> <svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></button>
         <a class="booking-contact-link" href="https://www.instagram.com/trippy.trail_/" target="_blank" rel="noopener noreferrer">Discuss this trip with Trippy Trail <svg class="icon" aria-hidden="true"><use href="#icon-diagonal"/></svg></a><div class="contact-row" data-contact-row hidden><a class="button button-outline contact-btn" data-contact="whatsapp" data-source="booking" href="#" target="_blank" rel="noopener noreferrer" hidden>WhatsApp us</a><a class="button button-outline contact-btn" data-contact="call" href="#" hidden>Call us</a></div>
         <button class="booking-back" type="button" id="booking-edit-estimate">← Adjust this trip</button><p class="booking-bottom-note" id="booking-download-status" aria-live="polite"></p>
@@ -632,6 +670,7 @@
 <script src="assets/js/config.js"></script>
 <script src="assets/js/live.js"></script>
 <script src="assets/js/app.js"></script>
+<script src="assets/js/trust.js"></script>
 <template id="font-licenses">DM-Sans-OFL.txt
 Copyright 2014 The DM Sans Project Authors (https://github.com/googlefonts/dm-fonts)
 

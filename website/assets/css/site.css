@@ -2069,3 +2069,33 @@ html[data-theme="dark"] .booking-field-error{color:#ff9f7e}
 #footer-support a{white-space:nowrap;max-width:100%}
 #footer-support a[href^="mailto:"]{white-space:normal;overflow-wrap:anywhere}
 .footer-policies button{padding-inline:0;text-align:left}
+
+/* Trust boosters: how booking works, secure note, receipt note, verified reviews */
+.how-steps{list-style:none;margin:36px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.how-steps li{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:24px}
+.how-steps li>span{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--orange);color:#fff;font-weight:700}
+.how-steps h3{margin:14px 0 6px;font-family:var(--heading);font-size:20px}
+.how-steps p{color:var(--muted);margin:0}
+.secure-note,.receipt-next{margin:14px 0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--white);font-size:14px}
+.secure-note[hidden],.receipt-next[hidden],.live-reviews[hidden],.tt-demo-only[hidden]{display:none}
+.live-review-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;margin-top:32px}
+.lr-card{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:22px}
+.lr-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.lr-stars{color:var(--orange);letter-spacing:2px}
+.lr-badge{font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--orange-soft,#ffe1cb);color:var(--forest)}
+.lr-card h3{margin:10px 0 6px;font-family:var(--heading);font-size:18px}
+.lr-body{margin:0 0 10px}
+.lr-meta{color:var(--muted);font-size:13px}
+.live-review-empty{margin-top:24px;color:var(--muted)}
+.live-review-form-wrap{margin-top:32px;border:1px solid var(--line);border-radius:18px;padding:18px 22px;background:var(--white)}
+.live-review-form-wrap summary{cursor:pointer;font-weight:700}
+#live-review-form{display:grid;gap:14px;margin-top:16px}
+#live-review-form label{display:grid;gap:6px;font-weight:600;font-size:14px}
+#live-review-form input,#live-review-form select,#live-review-form textarea{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--forest)}
+.lr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.lr-verify{border:1px dashed var(--line);border-radius:12px;padding:14px}
+.lr-verify p{margin:0 0 10px;color:var(--muted);font-size:14px}
+.lr-note{min-height:1.4em;font-size:14px}
+.lr-note.lr-error{color:#b91c1c}
+@media (max-width:900px){.how-steps{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.how-steps{grid-template-columns:1fr}}

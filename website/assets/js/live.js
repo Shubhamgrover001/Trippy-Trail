@@ -86,5 +86,9 @@
     });
   }
 
-  window.TrippyLive = Object.freeze({ enabled: cfg.enabled === true, load, book, pay });
+  /** Approved reviews (each flagged verified or not) and review submission. */
+  const reviews = () => request('/reviews').then(r => r.reviews || []);
+  const postReview = input => request('/reviews', { method: 'POST', body: input });
+
+  window.TrippyLive = Object.freeze({ enabled: cfg.enabled === true, load, book, pay, reviews, postReview });
 })();
