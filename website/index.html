@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f7f7f0"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png"><link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png"><meta name="mobile-web-app-capable" content="yes">
   <script>
     (() => {
-      let preference = 'light';
+      let preference = 'system';
       try { const saved = localStorage.getItem('trippy-trail:theme:v1'); if (['light', 'dark', 'system'].includes(saved)) preference = saved; } catch { /* Keep the original light theme when storage is unavailable. */ }
       const theme = preference === 'system' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : preference;
       document.documentElement.dataset.theme = theme;

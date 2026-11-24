@@ -2560,11 +2560,11 @@
   const choices = Array.from(dialog.querySelectorAll('input[name="site-theme"]'));
   const triggers = Array.from(document.querySelectorAll('[data-theme-open]'));
   const labels = { light: 'Light', dark: 'Dark', system: 'System' };
-  let preference = root.dataset.themePreference || 'light';
+  let preference = root.dataset.themePreference || 'system';
   let opener = null;
 
   function apply(value, save = false, announce = false) {
-    preference = Object.hasOwn(labels, value) ? value : 'light';
+    preference = Object.hasOwn(labels, value) ? value : 'system';
     const theme = preference === 'system' ? (system.matches ? 'dark' : 'light') : preference;
     root.dataset.theme = theme;
     root.dataset.themePreference = preference;
