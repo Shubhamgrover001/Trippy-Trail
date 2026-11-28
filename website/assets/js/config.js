@@ -8,8 +8,8 @@ window.TRIPPY_DEPARTURES = { shangarh: [], jibhi: [], kashmir: [] };
    phone: same format; a leading + is allowed. Leave both empty to keep every button hidden. */
 window.TRIPPY_CONTACT = { whatsapp: "918920933972", phone: "+918920933972", email: "Trippytrail.in@gmail.com" };
 /* OWNER INPUT: business registration details shown in the footer. Leave a value "" until you have it; nothing is shown as registered until it is filled in.
-   gstNumber: your GST number. tourismRegistration: your state tourism registration number. */
-window.TRIPPY_BUSINESS = { gstNumber: "", tourismRegistration: "" };
+   registeredName: the legal name the business is registered under. gstNumber: your GST number. tourismRegistration: your state tourism registration number. */
+window.TRIPPY_BUSINESS = { registeredName: "", gstNumber: "", tourismRegistration: "" };
 /* Live booking. Off =the site stays a demo. Turn on (enabled: true) only when the API is running and the owner inputs are in.
    base: leave "" when the website is served by the Trippy Trail server itself (same address); otherwise the API address, e.g. "https://api.example.com". */
 window.TRIPPY_API = { enabled: false, base: "" };

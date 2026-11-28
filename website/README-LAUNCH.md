@@ -13,7 +13,7 @@ Open the demo through a web server, not by double-clicking `index.html`. Quick l
 
 ## Owner input needed before going public
 1. **Domain.** Replace `YOUR-DOMAIN` in `robots.txt` and `sitemap.xml`. Add the canonical link, `og:url` and `og:image` in `index.html` (search `LAUNCH TODO`). Submit the sitemap in Google Search Console.
-2. **Business details.** Fill `gstNumber` and `tourismRegistration` in `config.js`. The footer shows them automatically.
+2. **Business details.** Fill `registeredName`, `gstNumber` and `tourismRegistration` in `config.js`. The footer shows them automatically.
 3. **Policies.** Approved wording for cancellation and refunds, rescheduling, prices/taxes/payments and booking terms. The privacy page needs a legal review.
 4. **Real trips.** Real departure dates, seats and final prices, entered in the admin page.
 5. **Photos and logo.** Original Trippy Trail photos and logo files to replace the web-sourced demo photos.

@@ -26,6 +26,7 @@ function check(env, { siteDir, dbInfo, today = new Date().toISOString().slice(0,
   const config = read('assets/js/config.js') || '';
   if (/TRIPPY_API\s*=\s*\{\s*enabled:\s*true/.test(config)) add('PASS', 'Live booking is switched on in config.js');
   else add('WARN', 'Live booking is OFF in config.js (site runs as a demo)', 'Set window.TRIPPY_API = { enabled: true, base: "" } when ready.');
+  if (/registeredName:\s*""/.test(config)) add('WARN', 'Registered business name not set in config.js');
   if (/gstNumber:\s*""/.test(config)) add('WARN', 'GST number not set in config.js');
   if (/tourismRegistration:\s*""/.test(config)) add('WARN', 'Tourism registration not set in config.js');
 

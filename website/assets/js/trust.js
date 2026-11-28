@@ -22,10 +22,11 @@
       dd.classList.remove('tbd');
       return true;
     };
+    const registered = fill('Registered business name', cfg.registeredName);
     const gst = fill('GST number', cfg.gstNumber);
     const tourism = fill('Tourism registration', cfg.tourismRegistration);
     const pill = $('.pending-pill', trust);
-    if (pill && gst && tourism) pill.remove();
+    if (pill && registered && gst && tourism) pill.remove();
   })();
 
   if (!isLive) return;
