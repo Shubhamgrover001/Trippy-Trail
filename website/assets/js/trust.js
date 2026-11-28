@@ -63,6 +63,7 @@
   function renderReviews(items) {
     list.replaceChildren();
     empty.hidden = items.length > 0;
+    items = items.slice().sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
     for (const review of items) {
       const card = el('article', 'lr-card');
       const head = el('div', 'lr-head');
@@ -77,6 +78,7 @@
       card.append(el('p', 'lr-meta', `${review.name} · ${TRIP_NAMES[review.tripId] || review.tripId}${date ? ` · ${date}` : ''}`));
       list.append(card);
     }
+    if (window.TrippyCapRows) window.TrippyCapRows(list);
   }
 
   live.reviews().then(renderReviews).catch(() => {

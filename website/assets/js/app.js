@@ -2075,6 +2075,30 @@
     card.append(top, badge, rating, element('h3', 'review-card-title', review.title), element('p', 'review-card-body', review.body), bottom);
     return card;
   }
+  /* Show only the first `limit` review cards; the rest scroll inside the list. */
+  function capRows(container, limit = 6) {
+    if (!container) return;
+    container.style.maxHeight = '';
+    container.classList.remove('is-capped');
+    container.removeAttribute('tabindex');
+    const cards = Array.from(container.children);
+    if (container.hidden || cards.length <= limit) return;
+    container.classList.add('is-capped');
+    container.tabIndex = 0;
+    const style = getComputedStyle(container);
+    const gap = parseFloat(style.rowGap) || 0;
+    const bottom = parseFloat(style.paddingBottom) || 0;
+    container.style.maxHeight = Math.ceil(cards[limit].offsetTop - gap + bottom) + 'px';
+  }
+  window.TrippyCapRows = capRows;
+  let capTimer;
+  const recap = () => { capRows($('#review-cards')); capRows(document.getElementById('live-review-list')); };
+  window.addEventListener('load', recap);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(recap);
+  window.addEventListener('resize', () => {
+    clearTimeout(capTimer);
+    capTimer = setTimeout(recap, 120);
+  });
   function render() {
     const focusedCard = document.activeElement?.closest?.('#review-cards [data-review-id]');
     const focusedReviewId = focusedCard?.dataset.reviewId;
@@ -2082,6 +2106,7 @@
     const average = items.length ? items.reduce((sum, review) => sum + review.rating, 0) / items.length : null;
     $('#review-cards').replaceChildren(...items.map(renderCard));
     $('#review-cards').hidden = items.length === 0;
+    capRows($('#review-cards'));
     $('#reviews-empty').hidden = items.length > 0;
     $('#reviews-average').textContent = average === null ? '—' : average.toFixed(1);
     $('#reviews-stars').replaceChildren(makeStars(average, true));

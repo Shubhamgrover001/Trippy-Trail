@@ -2078,7 +2078,9 @@ html[data-theme="dark"] .booking-field-error{color:#ff9f7e}
 .how-steps p{color:var(--muted);margin:0}
 .secure-note,.receipt-next{margin:14px 0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--white);font-size:14px}
 .secure-note[hidden],.receipt-next[hidden],.live-reviews[hidden],.tt-demo-only[hidden]{display:none}
-.live-review-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;margin-top:32px}
+.live-review-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:32px}
+@media(max-width:1050px){.live-review-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.live-review-list{grid-template-columns:minmax(0,1fr)}}
 .lr-card{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:22px}
 .lr-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 .lr-stars{color:var(--orange);letter-spacing:2px}
@@ -2099,3 +2101,14 @@ html[data-theme="dark"] .booking-field-error{color:#ff9f7e}
 .lr-note.lr-error{color:#b91c1c}
 @media (max-width:900px){.how-steps{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:520px){.how-steps{grid-template-columns:1fr}}
+
+/* Reviews: show the latest 6, scroll for the rest */
+.review-cards,.live-review-list{position:relative}
+.review-cards.is-capped,.live-review-list.is-capped{overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box;padding:6px 10px 6px 0;margin-right:-10px;-webkit-overflow-scrolling:touch}
+@supports not selector(::-webkit-scrollbar){.review-cards.is-capped,.live-review-list.is-capped{scrollbar-width:thin;scrollbar-color:#9db28f #e7ecde}html[data-theme="dark"] .review-cards.is-capped,html[data-theme="dark"] .live-review-list.is-capped{scrollbar-color:#58756a #1a2a28}}
+.review-cards.is-capped:focus-visible,.live-review-list.is-capped:focus-visible{outline:2px solid #ff6500;outline-offset:4px;border-radius:12px}
+.review-cards.is-capped::-webkit-scrollbar,.live-review-list.is-capped::-webkit-scrollbar{width:8px}
+.review-cards.is-capped::-webkit-scrollbar-track,.live-review-list.is-capped::-webkit-scrollbar-track{background:#e7ecde;border-radius:8px}
+.review-cards.is-capped::-webkit-scrollbar-thumb,.live-review-list.is-capped::-webkit-scrollbar-thumb{background:#9db28f;border-radius:8px}
+html[data-theme="dark"] .review-cards.is-capped::-webkit-scrollbar-track,html[data-theme="dark"] .live-review-list.is-capped::-webkit-scrollbar-track{background:#1a2a28}
+html[data-theme="dark"] .review-cards.is-capped::-webkit-scrollbar-thumb,html[data-theme="dark"] .live-review-list.is-capped::-webkit-scrollbar-thumb{background:#58756a}
